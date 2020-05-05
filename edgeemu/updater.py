@@ -72,7 +72,7 @@ class Main:
         Util.ensureDir(os.path.dirname(targetDir))
         Util.shellCall("/bin/mv %s %s" % (downloadTmpDir, targetDir))
 
-    def checkGame(self, romId, romName, romUrl, targetDir, downloadTmpDir):
+    def checkGame(self, romId, romName, romUrl, targetDir):
         pass
 
     def _getDownloadTmpDir(self, romId):

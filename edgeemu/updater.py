@@ -36,7 +36,7 @@ class Main:
                 gameInfoList = []
                 with self.mp.open_selenium_client() as driver:
                     driver.get_and_wait("https://edgeemu.net/browse-mame-%s.htm" % (postfix))
-                    for atag in driver.find_element_by_xpath("/html/body/div/div[4]/center/table/tbody//a"):
+                    for atag in driver.find_elements_by_xpath("/html/body/div/div[4]/center/table/tbody//a"):
                         romUrl = atag.get_attribute("href")
                         romName = atag.text
                         romId = re.match(".*id=([0-9]+)", romUrl).group(1)
@@ -47,10 +47,8 @@ class Main:
                         self.p.print("Download game \"%s\" (id: %s)." % (romName, romId))
                         downloadTmpDir = self._getDownloadTmpDir(romId)
                         Util.ensureDir(downloadTmpDir)
-                        try:
-                            self.downloadGame(romId, romName, romUrl, targetDir, downloadTmpDir)
-                        finally:
-                            Util.forceDelete(downloadTmpDir)
+                        self.downloadGame(romId, romName, romUrl, targetDir, downloadTmpDir)
+                        Util.forceDelete(downloadTmpDir)
                     else:
                         self.p.print("Check game \"%s\" (id: %s)." % (romName, romId))
                         self.checkGame(romId, romName, romUrl, targetDir)
@@ -66,7 +64,7 @@ class Main:
         # download
         with open(os.path.join(downloadTmpDir, "ROM_NAME"), "w") as f:
             f.write(romName)
-        Util.shellExec("/usr/bin/wget -c %s -P \"%s\" \"%s\"" % (Util.wgetCommonDownloadParam(), downloadTmpDir, romUrl))
+        Util.shellExec("/usr/bin/wget --trust-server-names --content-disposition -c %s -P \"%s\" \"%s\"" % (Util.wgetCommonDownloadParam(), downloadTmpDir, romUrl))
 
         # save to target directory
         Util.forceDelete(targetDir)

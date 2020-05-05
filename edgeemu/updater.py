@@ -45,10 +45,7 @@ class Main:
                     targetDir = os.path.join(self.dataDir, romId)
                     if not os.path.exists(targetDir):
                         self.p.print("Download game \"%s\" (id: %s)." % (romName, romId))
-                        downloadTmpDir = self._getDownloadTmpDir(romId)
-                        Util.ensureDir(downloadTmpDir)
-                        self.downloadGame(romId, romName, romUrl, targetDir, downloadTmpDir)
-                        Util.forceDelete(downloadTmpDir)
+                        self.downloadGame(romId, romName, romUrl, targetDir)
                     else:
                         self.p.print("Check game \"%s\" (id: %s)." % (romName, romId))
                         self.checkGame(romId, romName, romUrl, targetDir)
@@ -60,7 +57,10 @@ class Main:
         assert os.path.realpath(downloadTmpDir).startswith(self.dataDir)
         Util.shellCall("/bin/rm -rf %s" % (downloadTmpDir))
 
-    def downloadGame(self, romId, romName, romUrl, targetDir, downloadTmpDir):
+    def downloadGame(self, romId, romName, romUrl, targetDir):
+        downloadTmpDir = self._getDownloadTmpDir(romId)
+        Util.ensureDir(downloadTmpDir)
+
         # download
         with open(os.path.join(downloadTmpDir, "ROM_NAME"), "w") as f:
             f.write(romName)

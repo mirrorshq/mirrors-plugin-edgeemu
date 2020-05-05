@@ -46,7 +46,7 @@ class Main:
                     if not os.path.exists(targetDir):
                         self.p.print("Download game \"%s\" (id: %s)." % (romName, romId))
                         self.downloadGame(romId, romName, romUrl, targetDir)
-                        time.sleep(random.randint(5, 10))
+                        time.sleep(random.randint(1, 10))
                     else:
                         self.p.print("Check game \"%s\" (id: %s)." % (romName, romId))
                         self.checkGame(romId, romName, romUrl, targetDir)

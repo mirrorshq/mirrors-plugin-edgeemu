@@ -12,6 +12,7 @@ import string
 import random
 import socket
 import subprocess
+import urllib.request
 
 
 class Main:
@@ -41,15 +42,17 @@ class Main:
                         romName = atag.text
                         romId = re.match(".*id=([0-9]+)", romUrl).group(1)
                         gameInfoList.append((romId, romName, romUrl))
+                infoList = []
                 for romId, romName, romUrl in Util.randomSorted(gameInfoList):
                     targetDir = os.path.join(self.dataDir, romId)
                     if not os.path.exists(targetDir):
-                        self.p.print("Download game \"%s\" (id: %s)." % (romName, romId))
-                        self.downloadGame(romId, romName, romUrl, targetDir)
-                        time.sleep(random.randint(1, 10))
+                        infoList.append([romId, romName, romUrl, targetDir])
                     else:
                         self.p.print("Check game \"%s\" (id: %s)." % (romName, romId))
                         self.checkGame(romId, romName, romUrl, targetDir)
+                for romId, romName, romUrl, targetDir in infoList:
+                    self.p.print("Download game \"%s\" (id: %s)." % (romName, romId))
+                self.downloadGameList(infoList)
         finally:
             self.p.decIndent()
 
@@ -71,6 +74,48 @@ class Main:
         Util.forceDelete(targetDir)
         Util.ensureDir(os.path.dirname(targetDir))
         Util.shellCall("/bin/mv %s %s" % (downloadTmpDir, targetDir))
+
+    def downloadGameList(self, infoList):
+        # infoList: [[romId, romName, romUrl, targetDir]]
+        # there's no need to delete _aria2.input and _aria2.result, at least currently
+
+        # create download tmpdir
+        for i in infoList:
+            downloadTmpDir = self._getDownloadTmpDir(i[0])
+            Util.ensureDir(downloadTmpDir)
+            with open(os.path.join(downloadTmpDir, "ROM_NAME"), "w") as f:
+                f.write(i[1])
+            i.append(downloadTmpDir)
+
+        # create aria2 input file
+        inputFile = os.path.join(self.dataDir, "_aria2.input")
+        with open(inputFile, "w") as f:
+            for i in infoList:
+                romUrl = i[2]
+                downloadTmpDir = i[4]
+                buf = ""
+                buf += "%s\n" % (romUrl)
+                buf += " dir=%s\n" % (downloadTmpDir)
+                buf += " out=%s\n" % (urllib.request.urlopen(urllib.request.Request(romUrl, method='HEAD')).info().get_filename())  # it seems aria2 can't use filename from server, sucks
+                f.write(buf)
+
+        # download
+        resultBuf = ""
+        if True:
+            resultFile = os.path.join(self.dataDir, "_aria2.result")
+            subprocess.run("/usr/bin/aria2c -i \"%s\" -c --save-session=\"%s\" --auto-file-renaming false -j10" % (inputFile, resultFile),
+                           shell=True, universal_newlines=True)
+            resultBuf = Util.readFile(resultFile)
+
+        # save to target directory
+        for i in infoList:
+            romUrl = i[2]
+            targetDir = i[3]
+            downloadTmpDir = i[4]
+            if romUrl not in resultBuf.split("\n"):     # only save successful download result
+                Util.forceDelete(targetDir)
+                Util.ensureDir(os.path.dirname(targetDir))
+                Util.shellCall("/bin/mv %s %s" % (downloadTmpDir, targetDir))
 
     def checkGame(self, romId, romName, romUrl, targetDir):
         pass
@@ -109,6 +154,11 @@ class MUtil:
 
 
 class Util:
+
+    @staticmethod
+    def readFile(filename):
+        with open(filename) as f:
+            return f.read()
 
     @staticmethod
     def forceDelete(filename):

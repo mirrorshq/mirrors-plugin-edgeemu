@@ -50,9 +50,10 @@ class Main:
                     else:
                         self.p.print("Check game \"%s\" (id: %s)." % (romName, romId))
                         self.checkGame(romId, romName, romUrl, targetDir)
-                for romId, romName, romUrl, targetDir in infoList:
-                    self.p.print("Download game \"%s\" (id: %s)." % (romName, romId))
-                self.downloadGameList(infoList)
+                if len(infoList) > 0:
+                    for romId, romName, romUrl, targetDir in infoList:
+                        self.p.print("Download game \"%s\" (id: %s)." % (romName, romId))
+                    self.downloadGameList(infoList)
         finally:
             self.p.decIndent()
 
@@ -61,19 +62,19 @@ class Main:
         assert os.path.realpath(downloadTmpDir).startswith(self.dataDir)
         Util.shellCall("/bin/rm -rf %s" % (downloadTmpDir))
 
-    def downloadGame(self, romId, romName, romUrl, targetDir):
-        downloadTmpDir = self._getDownloadTmpDir(romId)
-        Util.ensureDir(downloadTmpDir)
+    # def downloadGame(self, romId, romName, romUrl, targetDir):
+    #     downloadTmpDir = self._getDownloadTmpDir(romId)
+    #     Util.ensureDir(downloadTmpDir)
 
-        # download
-        with open(os.path.join(downloadTmpDir, "ROM_NAME"), "w") as f:
-            f.write(romName)
-        Util.shellExec("/usr/bin/wget --trust-server-names --content-disposition -c %s -P \"%s\" \"%s\"" % (Util.wgetCommonDownloadParam(), downloadTmpDir, romUrl))
+    #     # download
+    #     with open(os.path.join(downloadTmpDir, "ROM_NAME"), "w") as f:
+    #         f.write(romName)
+    #     Util.shellExec("/usr/bin/wget --trust-server-names --content-disposition -c %s -P \"%s\" \"%s\"" % (Util.wgetCommonDownloadParam(), downloadTmpDir, romUrl))
 
-        # save to target directory
-        Util.forceDelete(targetDir)
-        Util.ensureDir(os.path.dirname(targetDir))
-        Util.shellCall("/bin/mv %s %s" % (downloadTmpDir, targetDir))
+    #     # save to target directory
+    #     Util.forceDelete(targetDir)
+    #     Util.ensureDir(os.path.dirname(targetDir))
+    #     Util.shellCall("/bin/mv %s %s" % (downloadTmpDir, targetDir))
 
     def downloadGameList(self, infoList):
         # infoList: [[romId, romName, romUrl, targetDir]]
@@ -103,8 +104,7 @@ class Main:
         resultBuf = ""
         if True:
             resultFile = os.path.join(self.dataDir, "_aria2.result")
-            subprocess.run("/usr/bin/aria2c -i \"%s\" -c --save-session=\"%s\" --auto-file-renaming false -j10" % (inputFile, resultFile),
-                           shell=True, universal_newlines=True)
+            subprocess.run("/usr/bin/aria2c -i \"%s\" -c --save-session=\"%s\" --auto-file-renaming false -j10" % (inputFile, resultFile), shell=True)
             resultBuf = Util.readFile(resultFile)
 
         # save to target directory
